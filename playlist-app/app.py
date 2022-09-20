@@ -13,6 +13,7 @@ connect_db(app)
 db.create_all()
 
 app.config['SECRET_KEY'] = "I'LL NEVER TELL!!"
+app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = False
 
 # Having the Debug Toolbar show redirects explicitly is often useful;
 # however, if you want to turn it off, you can uncomment this line:
