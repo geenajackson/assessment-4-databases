@@ -5,7 +5,7 @@ from models import db, connect_db, Playlist, Song, PlaylistSong
 from forms import NewSongForPlaylistForm, SongForm, PlaylistForm
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///playlist-app'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///playlist_app'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
@@ -48,8 +48,10 @@ def show_playlist(playlist_id):
 
     # ADD THE NECESSARY CODE HERE FOR THIS ROUTE TO WORK
     playlist = Playlist.query.get_or_404(playlist_id)
+    song_ids = [song.song_id for song in playlist.playlist_songs]
+    songs = [Song.query.get(id) for id in song_ids]
 
-    return render_template("playlist.html", playlist=playlist)
+    return render_template("playlist.html", playlist=playlist, songs=songs)
 
 
 @app.route("/playlists/add", methods=["GET", "POST"])
@@ -93,7 +95,8 @@ def show_song(song_id):
 
     # ADD THE NECESSARY CODE HERE FOR THIS ROUTE TO WORK
     song = Song.query.get_or_404(song_id)
-    playlists = song.on_playlists
+    playlist_ids = [playlist.playlist_id for playlist in song.on_playlists]
+    playlists = [Playlist.query.get(id) for id in playlist_ids]
 
     return render_template("song.html", song=song, playlists=playlists)
 
@@ -132,17 +135,22 @@ def add_song_to_playlist(playlist_id):
 
     playlist = Playlist.query.get_or_404(playlist_id)
     form = NewSongForPlaylistForm()
-    songs = Song.query.all()
 
     # Restrict form to songs not already on this playlist
-
-    curr_on_playlist = [song.id for song in playlist.playlist_songs]
-    song_list = list(set(songs)^set(curr_on_playlist))
-    form.song.choices = [(song.id, song.title) for song in song_list]
+    curr_on_playlist = [song.song_id for song in playlist.playlist_songs]
+    form.song.choices = (db.session.query(Song.id, Song.title)
+                      .filter(Song.id.notin_(curr_on_playlist))
+                      .all())
 
     if form.validate_on_submit():
 
           # ADD THE NECESSARY CODE HERE FOR THIS ROUTE TO WORK
+
+          song_id = form.song.data
+          add_song = PlaylistSong(playlist_id=playlist_id, song_id=song_id)
+
+          db.session.add(add_song)
+          db.session.commit()
 
           return redirect(f"/playlists/{playlist_id}")
 
