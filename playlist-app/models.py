@@ -14,7 +14,7 @@ class Playlist(db.Model):
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
 
-    playlist_songs = db.relationship("Song")
+    playlist_songs = db.relationship("PlaylistSong")
 
 
 class Song(db.Model):
@@ -26,7 +26,7 @@ class Song(db.Model):
     title = db.Column(db.String, nullable=False)
     artist = db.Column(db.String, nullable=False)
 
-    on_playlists = db.relationship("Playlist")
+    on_playlists = db.relationship("PlaylistSong")
 
 class PlaylistSong(db.Model):
     """Mapping of a playlist to a song."""
